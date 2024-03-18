@@ -12,8 +12,8 @@ reddit = praw.Reddit(
 )
 
 # Load the models and tokenizers
-translation_tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-tr-en")
-translation_model = AutoModelForSeq2SeqLM.from_pretrained("Helsinki-NLP/opus-mt-tr-en")
+translation_tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-tc-big-tr-en")
+translation_model = AutoModelForSeq2SeqLM.from_pretrained("Helsinki-NLP/opus-mt-tc-big-tr-en")
 moderation_tokenizer = AutoTokenizer.from_pretrained("KoalaAI/Text-Moderation")
 moderation_model = AutoModelForSequenceClassification.from_pretrained("KoalaAI/Text-Moderation")
 
@@ -66,15 +66,15 @@ def moderate_comments():
                 label_prob_pairs_translated = list(zip(labels_translated, probabilities_translated))
                 label_prob_pairs_translated.sort(key=lambda item: item[1], reverse=True)
             
-            # Check if any label other than "OK" has probability > 0.6 for either original or translated comment
+            # Check if any label other than "OK" has probability > 0.7 for either original or translated comment
             should_remove = False
             for label, probability in label_prob_pairs_original:
-                if label != "OK" and probability > 0.6:
+                if label != "OK" and probability > 0.7:
                     should_remove = True
                     break
             if not should_remove and translated_comment:
                 for label, probability in label_prob_pairs_translated:
-                    if label != "OK" and probability > 0.6:
+                    if label != "OK" and probability > 0.7:
                         should_remove = True
                         break
             
