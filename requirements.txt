@@ -1,0 +1,10 @@
+praw==7.7.1
+transformers==4.30.2
+sacremoses==0.1.1
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==2.2.0+cpu
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torchvision==0.9.1+cpu
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torchaudio==2.2.1+cpu
+sentencepiece==0.2.0
