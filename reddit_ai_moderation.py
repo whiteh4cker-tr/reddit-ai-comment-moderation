@@ -85,6 +85,9 @@ def moderate_comments():
                 if translated_comment:
                     print("Translated Text:", translated_comment)  # Print translated text
                 comment.mod.remove()
+
+                # Add moderator note
+                reddit.subreddit(subreddit_name).mod.notes.create(label="ABUSE_WARNING", note="Violation", redditor=comment.author)
             else:
                 print("Comment is OK. Content:", comment.body)
                 print("Comment is OK. Translated Text:", translated_comment)
