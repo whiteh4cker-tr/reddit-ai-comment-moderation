@@ -37,61 +37,64 @@ def translate_text(text, max_length=8192):
 
 def moderate_comments():
     subreddit = reddit.subreddit(subreddit_name)
-    # Check new comments continuously
-    for comment in subreddit.stream.comments(skip_existing=True):
+    while True:
         try:
-            if has_turkish_chars(comment.body):
-                # Translate Turkish comments to English
-                translated_comment = translate_text(comment.body)
-                inputs_translated = moderation_tokenizer(translated_comment, return_tensors="pt")
-                print("Translated Text:", translated_comment)  # Print translated text
-            else:
-                translated_comment = None
-            
-            # Apply moderation model to original comment
-            inputs_original = moderation_tokenizer(comment.body, return_tensors="pt")
-            
-            outputs_original = moderation_model(**inputs_original)
-            probabilities_original = outputs_original.logits.softmax(dim=-1).squeeze()
-            id2label = moderation_model.config.id2label
-            labels_original = [id2label[idx] for idx in range(len(probabilities_original))]
-            label_prob_pairs_original = list(zip(labels_original, probabilities_original))
-            label_prob_pairs_original.sort(key=lambda item: item[1], reverse=True)
-            
-            # Apply moderation model to translated comment if it exists
-            if translated_comment:
-                outputs_translated = moderation_model(**inputs_translated)
-                probabilities_translated = outputs_translated.logits.softmax(dim=-1).squeeze()
-                labels_translated = [id2label[idx] for idx in range(len(probabilities_translated))]
-                label_prob_pairs_translated = list(zip(labels_translated, probabilities_translated))
-                label_prob_pairs_translated.sort(key=lambda item: item[1], reverse=True)
-            
-            # Check if any label other than "OK" has probability > 0.7 for either original or translated comment
-            should_remove = False
-            for label, probability in label_prob_pairs_original:
-                if label != "OK" and probability > 0.7:
-                    should_remove = True
-                    break
-            if not should_remove and translated_comment:
-                for label, probability in label_prob_pairs_translated:
-                    if label != "OK" and probability > 0.7:
-                        should_remove = True
-                        break
-            
-            # Print and remove comment if necessary
-            if should_remove:
-                print("Removing comment with label:", label, "and probability:", probability)
-                print("Content:", comment.body)  # Print original text
-                if translated_comment:
-                    print("Translated Text:", translated_comment)  # Print translated text
-                comment.mod.remove()
+            # Check new comments continuously
+            for comment in subreddit.stream.comments(skip_existing=True):
+                try:
+                    if has_turkish_chars(comment.body):
+                        # Translate Turkish comments to English
+                        translated_comment = translate_text(comment.body)
+                        inputs_translated = moderation_tokenizer(translated_comment, return_tensors="pt")
+                        print("Translated Text:", translated_comment)  # Print translated text
+                    else:
+                        translated_comment = None
+                    
+                    # Apply moderation model to original comment
+                    inputs_original = moderation_tokenizer(comment.body, return_tensors="pt")
+                    
+                    outputs_original = moderation_model(**inputs_original)
+                    probabilities_original = outputs_original.logits.softmax(dim=-1).squeeze()
+                    id2label = moderation_model.config.id2label
+                    labels_original = [id2label[idx] for idx in range(len(probabilities_original))]
+                    label_prob_pairs_original = list(zip(labels_original, probabilities_original))
+                    label_prob_pairs_original.sort(key=lambda item: item[1], reverse=True)
+                    
+                    # Apply moderation model to translated comment if it exists
+                    if translated_comment:
+                        outputs_translated = moderation_model(**inputs_translated)
+                        probabilities_translated = outputs_translated.logits.softmax(dim=-1).squeeze()
+                        labels_translated = [id2label[idx] for idx in range(len(probabilities_translated))]
+                        label_prob_pairs_translated = list(zip(labels_translated, probabilities_translated))
+                        label_prob_pairs_translated.sort(key=lambda item: item[1], reverse=True)
+                    
+                    # Check if any label other than "OK" has probability > 0.7 for either original or translated comment
+                    should_remove = False
+                    for label, probability in label_prob_pairs_original:
+                        if label != "OK" and probability > 0.7:
+                            should_remove = True
+                            break
+                    if not should_remove and translated_comment:
+                        for label, probability in label_prob_pairs_translated:
+                            if label != "OK" and probability > 0.7:
+                                should_remove = True
+                                break
+                    
+                    # Print and remove comment if necessary
+                    if should_remove:
+                        print("Removing comment with label:", label, "and probability:", probability)
+                        print("Content:", comment.body)  # Print original text
+                        if translated_comment:
+                            print("Translated Text:", translated_comment)  # Print translated text
+                        comment.mod.remove()
 
-                # Add moderator note
-                reddit.subreddit(subreddit_name).mod.notes.create(label="ABUSE_WARNING", note="Violation", redditor=comment.author)
-            else:
-                print("Comment is OK. Content:", comment.body)
-                print("Comment is OK. Translated Text:", translated_comment)
-                
+                        # Add moderator note
+                        reddit.subreddit(subreddit_name).mod.notes.create(label="ABUSE_WARNING", note="Violation", redditor=comment.author)
+                    else:
+                        print("Comment is OK. Content:", comment.body)
+                        print("Comment is OK. Translated Text:", translated_comment)
+                except Exception as e:
+                    print("Error processing comment:", e)
         except Exception as e:
             print("Error processing comment:", e)
 
