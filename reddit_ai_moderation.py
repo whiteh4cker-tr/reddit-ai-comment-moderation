@@ -27,10 +27,10 @@ def has_turkish_chars(text):
     """Check if the text contains Turkish characters."""
     return bool(turkish_chars_regex.search(text))
 
-def translate_text(text, max_length=8192):
+def translate_text(text, max_length=510):
     """Translate Turkish text to English."""
-    inputs = translation_tokenizer(text, return_tensors="pt", padding=True, truncation=True)
-    max_length += inputs.input_ids.size(1)  # Add the length of input sequence to max_length
+    inputs = translation_tokenizer(text, return_tensors="pt", padding=True, truncation=True, max_length=max_length)
+    # max_length += inputs.input_ids.size(1)  # Add the length of input sequence to max_length
     outputs = translation_model.generate(inputs.input_ids, max_length=max_length, num_beams=4, early_stopping=True)
     translated_text = translation_tokenizer.decode(outputs[0], skip_special_tokens=True)
     return translated_text
@@ -51,7 +51,7 @@ def moderate_comments():
                         translated_comment = None
                     
                     # Apply moderation model to original comment
-                    inputs_original = moderation_tokenizer(comment.body, return_tensors="pt")
+                    inputs_original = moderation_tokenizer(comment.body, return_tensors="pt", truncation=True, max_length=510)
                     
                     outputs_original = moderation_model(**inputs_original)
                     probabilities_original = outputs_original.logits.softmax(dim=-1).squeeze()
@@ -83,7 +83,7 @@ def moderate_comments():
                     # Print and remove comment if necessary
                     if should_remove:
                         print("Removing comment with label:", label, "and probability:", probability)
-                        print("Content:", comment.body)  # Print original text
+                        print("Content:", inputs_original)  # Print original text
                         if translated_comment:
                             print("Translated Text:", translated_comment)  # Print translated text
                         comment.mod.remove()
@@ -91,7 +91,7 @@ def moderate_comments():
                         # Add moderator note
                         reddit.subreddit(subreddit_name).mod.notes.create(label="ABUSE_WARNING", note="Violation", redditor=comment.author)
                     else:
-                        print("Comment is OK. Content:", comment.body)
+                        print("Comment is OK. Content:", inputs_original)
                         print("Comment is OK. Translated Text:", translated_comment)
                 except Exception as e:
                     print("Error processing comment:", e)
