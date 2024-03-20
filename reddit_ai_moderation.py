@@ -83,7 +83,7 @@ def moderate_comments():
                     # Print and remove comment if necessary
                     if should_remove:
                         print("Removing comment with label:", label, "and probability:", probability)
-                        print("Content:", inputs_original)  # Print original text
+                        print("Content:", comment.body)  # Print original text
                         if translated_comment:
                             print("Translated Text:", translated_comment)  # Print translated text
                         comment.mod.remove()
@@ -91,7 +91,7 @@ def moderate_comments():
                         # Add moderator note
                         reddit.subreddit(subreddit_name).mod.notes.create(label="ABUSE_WARNING", note="Violation", redditor=comment.author)
                     else:
-                        print("Comment is OK. Content:", inputs_original)
+                        print("Comment is OK. Content:", comment.body)
                         print("Comment is OK. Translated Text:", translated_comment)
                 except Exception as e:
                     print("Error processing comment:", e)
