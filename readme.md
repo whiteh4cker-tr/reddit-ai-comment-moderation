@@ -16,7 +16,7 @@ Open `reddit_ai_moderation.py` using a text editor and input these credentials. 
 
 #### Configure what actions the Reddit bot performs
 
-The default probability value is 0.7/1.0. It can be set separately for the original comment and translated comment. Decreasing these values will increase the probability of false positives and the chance the removal action is performed. The default values are fine, but you can experiment.
+The default probability value for removal is 0.75/1.0. It can be set separately for the original comment and translated comment. Decreasing these values will increase the probability of false positives and the chance the removal action is performed. The default values are fine, but you can experiment.
 
 #### System requirements for running the bot
 
