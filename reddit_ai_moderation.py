@@ -68,31 +68,47 @@ def moderate_comments():
                         label_prob_pairs_translated = list(zip(labels_translated, probabilities_translated))
                         label_prob_pairs_translated.sort(key=lambda item: item[1], reverse=True)
                     
-                    # Check if any label other than "OK" has probability > 0.7 for either original or translated comment
+                    # Check if any label other than "OK" has probability >= 0.75 for either original or translated comment
                     should_remove = False
+                    should_approve = False
                     for label, probability in label_prob_pairs_original:
-                        if label != "OK" and probability > 0.7:
+                        if label != "OK" and probability >= 0.75:
                             should_remove = True
                             break
                     if not should_remove and translated_comment:
                         for label, probability in label_prob_pairs_translated:
-                            if label != "OK" and probability > 0.7:
+                            if label != "OK" and probability >= 0.75:
                                 should_remove = True
                                 break
-                    
+
+                    # Check if "OK" label has probability >= 0.97 for either original or translated comment
+                    if not should_remove:
+                        for (label_orig, probability_orig), (label_trans, probability_trans) in zip(label_prob_pairs_original, label_prob_pairs_translated):
+                            if label_orig == "OK" and label_trans == "OK" and probability_orig >= 0.97 and probability_trans >= 0.97:
+                                should_approve = True
+                                break
+
                     # Print and remove comment if necessary
                     if should_remove:
                         print("Removing comment with label:", label, "and probability:", probability)
-                        print("Content:", comment.body)  # Print original text
+                        print("Removed comment:", comment.body)  # Print original text
                         if translated_comment:
-                            print("Translated Text:", translated_comment)  # Print translated text
+                            print("Removed comment translation:", translated_comment)  # Print translated text
                         comment.mod.remove()
 
                         # Add moderator note
                         reddit.subreddit(subreddit_name).mod.notes.create(label="ABUSE_WARNING", note="Violation", redditor=comment.author)
+                    
+                    # Print and approve comment if necessary
+                    if should_approve:
+                        print("Approved comment:", comment.body)  # Print original text
+                        if translated_comment:
+                            print("Approved comment translation:", translated_comment)  # Print translated text
+                        comment.mod.approve()
+
                     else:
-                        print("Comment is OK. Content:", comment.body)
-                        print("Comment is OK. Translated Text:", translated_comment)
+                        print("Comment is processed, but no action is taken. Content:", comment.body)
+                        print("Comment is processed, but no action is taken. Translated Text:", translated_comment)
                 except Exception as e:
                     print("Error processing comment:", e)
         except Exception as e:
